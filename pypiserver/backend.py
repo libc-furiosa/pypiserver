@@ -142,9 +142,18 @@ class SimpleFileBackend(Backend):
     def __init__(self, config: "Configuration"):
         super().__init__(config)
         self.roots = [Path(root).resolve() for root in config.roots]
+        self.cache = {}
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
+
+    def digest(self, pkg: PkgFile) -> t.Optional[str]:
+        if pkg.fn in self.cache:
+            return self.cache[pkg.fn]
+
+        res = super().digest(pkg)
+        self.cache[pkg.fn] = res
+        return res
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         write_file(stream, self.roots[0].joinpath(filename))
