@@ -148,11 +148,15 @@ class SimpleFileBackend(Backend):
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
-        if pkg.fn in self.cache:
-            return self.cache[pkg.fn]
+        key = f"{pkg.fn}.{int(os.path.getmtime(pkg.fn))}"
+
+        if key in self.cache:
+            return self.cache[key]
 
         res = super().digest(pkg)
-        self.cache[pkg.fn] = res
+        self.cache[key] = res
+        log.info("Store digest for %s", key)
+
         return res
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
